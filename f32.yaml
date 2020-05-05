@@ -186,7 +186,9 @@
       state: present
       remote: flathub
     loop:
+      - io.github.Hexchat
       - org.gimp.GIMP
+      - org.gnome.gitg
       - org.inkscape.Inkscape
   - name: Install cursor theme
     dnf:
