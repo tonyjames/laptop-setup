@@ -143,6 +143,7 @@
       - xclip
       - xdotool
       - youtube-dl
+      - yubikey-personalization-gui
       state: present
   - name: Add Brave repo
     yum_repository:
