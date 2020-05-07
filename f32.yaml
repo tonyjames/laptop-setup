@@ -177,6 +177,7 @@
       remote: flathub
     loop:
       - io.github.Hexchat
+      - org.audacityteam.Audacity
       - org.gimp.GIMP
       - org.gnome.gitg
       - org.inkscape.Inkscape
