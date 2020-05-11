@@ -145,6 +145,7 @@
       - xdotool
       - youtube-dl
       - yubico-piv-tool
+      - yubikey-manager
       - yubikey-personalization-gui
       state: present
   - name: Install Google Chrome
