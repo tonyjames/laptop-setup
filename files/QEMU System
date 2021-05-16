@@ -1,0 +1,5 @@
+[source]
+name=QEMU System
+type=libvirt
+uri=qemu+unix:///system
+save-on-quit=true

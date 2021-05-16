@@ -1,0 +1,192 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars_files:
+  - vars.yaml
+  tasks:
+  - name: Enable rpmfusion repos
+    dnf:
+      name:
+      - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ansible_distribution_major_version}}.noarch.rpm
+      - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ansible_distribution_major_version}}.noarch.rpm
+      disable_gpg_check: yes
+      state: present
+  - name: Install GNOME apps
+    dnf:
+      name:
+      - gnome-extensions-app
+      - gnome-firmware
+      - gnome-tweaks
+      state: present
+  - name: Install fonts
+    dnf:
+      name:
+      - cascadia-code-fonts
+      - google-noto-sans-fonts
+      - google-roboto-fonts
+      - liberation-fonts
+      - overpass-fonts
+      - redhat-display-fonts
+      - redhat-text-fonts
+      state: present
+  - name: Install development tools
+    dnf:
+      name:
+      - copr-cli
+      - golang
+      - nodejs
+      - "@Development Tools"
+      - "@RPM Development Tools"
+      state: present
+  - name: Install container packages
+    dnf:
+      name:
+      - buildah
+      - podman
+      - skopeo
+      state: present
+  - name: Install virtualization packages
+    dnf:
+      name:
+      - libguestfs-tools
+      - libvirt-client
+      - virt-install
+      - virt-manager
+      - virt-top
+      - virt-viewer
+      state: present
+  - name: Allow users in the wheel group to manage libvirt
+    copy:
+      src: files/49-org.libvirt.unix.manager.rules
+      dest: /etc/polkit-1/rules.d/49-org.libvirt.unix.manager.rules
+      owner: root
+      group: root
+      mode: 0644
+  - name: Install Google Chrome
+    dnf:
+      name: https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+      disable_gpg_check: yes
+      state: present
+  - name: Create directory for Chrome policy
+    file:
+      path: /etc/opt/chrome/policies/managed
+      state: directory
+      recurse: yes
+  - name: Add Chrome policy
+    copy:
+      src: files/redhat.json
+      dest: /etc/opt/chrome/policies/managed/redhat.json
+      owner: root
+      group: root
+      mode: 0644
+  - name: Add Visual Studio Code repo
+    yum_repository:
+      name: code
+      description: Visual Studio Code
+      baseurl: https://packages.microsoft.com/yumrepos/vscode
+      gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+      gpgcheck: yes
+  - name: Install GPG key for Visual Studio Code repo
+    rpm_key:
+      key: https://packages.microsoft.com/keys/microsoft.asc
+      state: present
+  - name: Install Visual Studio Code
+    dnf:
+      name: code
+      state: present
+  - name: Install media codecs
+    dnf:
+      name:
+      - gstreamer1-libav
+      - gstreamer1-plugins-bad-free
+      - gstreamer1-plugins-bad-free-gtk
+      - gstreamer1-plugins-bad-freeworld
+      - gstreamer1-plugins-base
+      - gstreamer1-plugins-good
+      - gstreamer1-plugins-ugly
+      - gstreamer1-plugins-ugly-free
+      state: present
+  - name: Install packages for VA-API
+    dnf:
+      name:
+      - gstreamer1-vaapi
+      - intel-media-driver
+      - libva
+      - libva-utils
+      - libvdpau-va-gl
+      state: present
+  - name: Remove unwanted packages
+    dnf:
+      name:
+      - fedora-chromium-config
+      - gnome-calendar
+      - gnome-contacts
+      - gnome-classic-session
+      - gnome-clocks
+      - gnome-maps
+      - gnome-photos
+      - gnome-tour
+      - gnome-weather
+      - libreoffice-*
+      - rhythmbox
+      state: absent
+  - name: Install snapd
+    dnf:
+      name: snapd
+      state: present
+  - name: Install miscellaneous packages
+    dnf:
+      name:
+      - exfatprogs
+      - firewall-config
+      - gtk-v4l
+      - hplip-gui
+      - krb5-workstation
+      - neofetch
+      - pwgen
+      - redhat-lsb
+      - xclip
+      - xdotool
+      - youtube-dl
+      state: present
+  - name: Install cursor theme
+    dnf:
+      name: breeze-cursor-theme
+      state: present
+  - name: Install icon theme
+    dnf:
+      name: papirus-icon-theme
+      state: present
+  - name: Add user to groups
+    user:
+      name: "{{my_user}}"
+      groups: libvirt,mock
+      append: yes
+  - name: Enable fstrim.timer
+    systemd:
+      name: fstrim.timer
+      enabled: yes
+
+- hosts: localhost
+  connection: local
+  become: false
+  vars_files:
+    - vars.yaml
+  tasks:
+  - name: Create rpmbuild directories
+    file:
+      path: "{{item}}"
+      state: directory
+      mode: 0755
+    loop:
+    - /home/{{my_user}}/rpmbuild/BUILD
+    - /home/{{my_user}}/rpmbuild/RPMS
+    - /home/{{my_user}}/rpmbuild/SOURCES
+    - /home/{{my_user}}/rpmbuild/SPECS
+    - /home/{{my_user}}/rpmbuild/SRPMS
+  - name: Create ~/.rpmmacros
+    lineinfile:
+      path: /home/{{my_user}}/.rpmmacros
+      create: yes
+      line: "%_topdir %(echo $HOME)/rpmbuild"
